@@ -1,0 +1,31 @@
+{
+  "$schema": "https://raw.githubusercontent.com/MaayanLab/appyter-catalog/master/schema/appyter-validator.json",
+  "name": "Xena_DE",
+  "title": "Xena Differential Gene Expression analysis pipeline",
+  "version": "0.0.1",
+  "description": "Differential gene expression analysis pipeline (adapted from Maayan lab Bulk RNA-seq analysis pipeline) enables you to analyze and visualize datasets with state-of-the-art algorithms and visualization methods.",
+  "image": "screenshot.png",
+  "authors": [
+    {
+      "name": "UCSC Xena team",
+      "email": "minji.jeon1@gmail.com"
+    }
+  ],
+  "url": "https://github.com/MaayanLab/appyter-catalog",
+  "tags": [
+    "Enrichment Analysis",
+    "Enrichr",
+    "L1000",
+    "L1000FWD",
+    "RNA-seq"
+  ],
+  "license": "CC-BY-NC-SA-4.0",
+  "appyter": {
+    "file": "Xena_DE_Analysis_Pipeline.ipynb",
+    "profile": "biojupies",
+    "extras": [
+      "toggle-code",
+      "hide-code"
+    ]
+  }
+}

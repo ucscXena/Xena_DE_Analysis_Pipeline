@@ -1,0 +1,30 @@
+{% extends "biojupies/form.j2" %}
+
+{% block head %}
+{{ super() }}
+{% endblock %}
+
+{% block style %}
+{{ super() }}
+{% endblock %}
+
+{% block body %}
+<div class="row">
+<div class="col-sm-12">
+<div class="container">
+    <div class="mt-3 row align-items-center">
+        <div class="col-3">
+            <img src="{{ url_for('static', filename='screenshot.png') }}" style="width:150px" class="img-fluid float-right">
+        </div>
+        <div class="col-7">
+            <h1> Xena Differential Gene Expression Analysis </h1>
+            <p class="my-0"> Analysis and visualization of gene expression data using subgroups you just built using Xena, adapted from Maayan lab bulk RNA-seq analysis 
+                <a href="https://appyters.maayanlab.cloud/#/Bulk_RNA_seq">appyter here</a>
+            </p>
+        </div>
+    </div>
+</div>
+</div>
+</div>
+{{ super() }}
+{% endblock %}
