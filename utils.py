@@ -70,6 +70,44 @@ def check_subgroups (control_group, case_group):
     if len(list(set(control_group) & set(case_group))) != 0:
         raise Exception('There can not be shared samples between the two subgroups')
 
+probemap_level = {
+    "gencode.v22.annotation.gene.probeMap": "ensemble_gene"
+}
+
+def check_probe_level(probemap_df):
+    counter = 0
+    counter_gene_level = 0
+    for probe in probemap_df.index:
+        if probe == probemap_df.loc[probe].gene:
+            counter_gene_level += 1
+        counter += 1
+        if counter == 1000:
+            break
+    if counter_gene_level/counter > 0.5:
+        probe_level = "HUGO"
+    else:
+        probe_level = "probe"
+    return probe_level
+
+def convert_to_hugo(expr_df, probemap_df):
+    '''
+    convert expr_df matrix to HUGO gene_level expr_df using probemap_df
+    '''
+    big_list= []
+    gene_list = []
+    for probe in expr_df.index:
+        try:
+            if probemap_df.loc[probe].gene:
+                genes = probemap_df.loc[probe].gene.split(",")
+                gene_list += genes
+                for gene in genes:
+                    big_list.append(list(expr_df.loc[probe]))
+        except:
+            pass
+    df_copy = pd.DataFrame(big_list, index = gene_list, columns=expr_df.columns)
+    df_copy = df_copy.groupby(df_copy.index).mean()
+    return df_copy
+
 def check_df(df, col):
     if col not in df.columns:
         raise IOError
