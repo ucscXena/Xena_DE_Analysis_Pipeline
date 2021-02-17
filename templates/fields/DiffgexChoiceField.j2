@@ -1,0 +1,30 @@
+  
+<div class="row px-3 pb-3">
+  <div class="col-lg-3 bold text-lg-right my-auto">
+    {{ this.args.label }}
+    {%- if this.args.description %}
+      <sup data-toggle="tooltip" title="{{ this.args.description }}"><i class="far fa-question-circle"></i></sup>
+    {% endif -%}:
+  </div>
+  <div class="col-lg-6 pt-2 pt-lg-0">
+    <select
+      id="{{ this.args.name }}"
+      name="{{ this.args.name }}"
+      class="form-control nodecoration tiny bg-white px-2 py-1 mb-0"
+    >
+      {% for choice in this.args.choices %}
+          <option{% if choice == this.args.default %} selected{% endif %}>{{ choice }}</option>
+      {% endfor %}
+    </select>
+  </div>
+</div>
+
+<script>
+(function() {
+   var value = JSON.parse(decodeURIComponent(location.hash.substring(1))).{{ this.args.urlhashkey }};
+   var DESeq2 = value && value.trim().toLowerCase() === "count";
+   if ( DESeq2) {
+       document.getElementById('{{ this.args.name }}').value = 'DESeq2';
+   }
+})();
+</script>
