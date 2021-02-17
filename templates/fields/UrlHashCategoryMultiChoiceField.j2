@@ -20,8 +20,7 @@
 
 <script>
 (function() {
-    var name = "{{ this.args.name }}".split('_')[0];
-    var choices = JSON.parse(decodeURIComponent(location.hash.substring(1)))[name];
+    var choices = JSON.parse(decodeURIComponent(location.hash.substring(1))).{{ this.args.urlhashkey }};
     var selectBox = document.getElementById('{{ this.args.name }}');
     if (choices) {
         selectBox.innerHTML="";

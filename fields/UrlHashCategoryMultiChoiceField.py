@@ -8,6 +8,7 @@ class UrlHashCategoryMultiChoiceField(Field):
     {{
       UrlHashMultiChoiceField(
         name="category_case", # the name has to be category_case or category_control
+        urlhashkey="category" # (str) the key in url hashed object
         label="a",
         description="B"
       )

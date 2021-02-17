@@ -10,7 +10,7 @@ format: {{this.args.format}}
 <script>
 // update hidden field with the hash when page is ready
 (function() {
-   var value = JSON.parse(decodeURIComponent(location.hash.substring(1))).{{ this.args.name }};
+   var value = JSON.parse(decodeURIComponent(location.hash.substring(1))).{{ this.args.urlhashkey }};
    if ( value)
       document.getElementById('{{ this.args.name }}').value = value;
 })();
