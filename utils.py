@@ -412,20 +412,20 @@ def plot_2D_scatter(x, y, text='', title='', xlab='', ylab='', hoverinfo='text',
 
 
         
-robjects.r('''limma <- function(rawcount_dataframe, design_dataframe, filter_genes=FALSE, adjust="BH") {
+robjects.r('''limma_voom <- function(rawcount_dataframe, design_dataframe, adjust="BH") {
     # Load packages
     suppressMessages(require(limma))
     suppressMessages(require(edgeR))
     # Convert design matrix
     design <- as.matrix(design_dataframe)
-    
+
     # Create DGEList object
     dge <- DGEList(counts=rawcount_dataframe)
+
     # Filter genes
-    if (filter_genes) {
-        keep <- filterByExpr(dge, design)
-        dge <- dge[keep,]
-    }
+    keep <- filterByExpr(dge, design)
+    dge <- dge[keep,]
+
     # Calculate normalization factors
     dge <- calcNormFactors(dge)
     # Run VOOM
@@ -446,6 +446,41 @@ robjects.r('''limma <- function(rawcount_dataframe, design_dataframe, filter_gen
     return (results)
 }
 ''')
+
+robjects.r('''limma <- function(rawcount_dataframe, design_dataframe, adjust="BH") {
+    # Load packages
+    suppressMessages(require(limma))
+    suppressMessages(require(edgeR))
+    # Convert design matrix
+    design <- as.matrix(design_dataframe)
+
+    # Create DGEList object
+    dge <- DGEList(counts=rawcount_dataframe)
+
+    # Filter genes
+    keep <- filterByExpr(dge, design)
+    dge <- dge[keep,]
+
+    # Calculate normalization factors
+    dge <- calcNormFactors(dge)
+
+    # Fit linear model
+    fit <- lmFit(normalizeMedianValues(dge$counts), design)  # Normalization so that each column has the same median value
+    # Make contrast matrix
+    cont.matrix <- makeContrasts(de=B-A, levels=design)
+    # Fit
+    fit2 <- contrasts.fit(fit, cont.matrix)
+    # Run DE
+    fit2 <- eBayes(fit2)
+    # Get results
+    limma_dataframe <- topTable(fit2, adjust=adjust, number=nrow(rawcount_dataframe))
+
+    # Return
+    results <- list("limma_dataframe"= limma_dataframe, "rownames"=rownames(limma_dataframe))
+    return (results)
+}
+''')
+
 robjects.r('''edgeR <- function(rawcount_dataframe, g1, g2) {
     # Load packages
     suppressMessages(require(limma))
@@ -463,6 +498,10 @@ robjects.r('''edgeR <- function(rawcount_dataframe, g1, g2) {
     colData <- DT
 
     y <- DGEList(counts=rawcount_dataframe, group=colData$group)
+    # Filter genes
+    keep <- filterByExpr(y)
+    y <- y[keep,]
+
     y <- calcNormFactors(y)
     y <- estimateCommonDisp(y)
     y <- estimateTagwiseDisp(y)
@@ -472,9 +511,6 @@ robjects.r('''edgeR <- function(rawcount_dataframe, g1, g2) {
     res <- as.data.frame(res)
     results <- list("edgeR_dataframe"= res, "rownames"=rownames(res))
     return (results)
-    
-    
-    
 }
 
 
@@ -483,17 +519,23 @@ robjects.r('''edgeR <- function(rawcount_dataframe, g1, g2) {
 robjects.r('''deseq2 <- function(rawcount_dataframe, g1, g2) {
     # Load packages
     suppressMessages(require(DESeq2))
+    suppressMessages(require(edgeR))
     suppressMessages(require(dbplyr))
     colData <- as.data.frame(c(rep(c("Control"),length(g1)),rep(c("Condition"),length(g2))))
     rownames(colData) <- c(g1,g2)
     colnames(colData) <- c("group")
     colData$group = relevel(as.factor(colData$group), "Control")
 
+    dge <- DGEList(counts=rawcount_dataframe, group=colData$group)
+    # Filter genes
+    keep <- filterByExpr(dge)
+    dge <- dge[keep,]
+
     target <- colnames(rawcount_dataframe)
     DT <- colData %>% dplyr::slice(match(target, rownames(colData)))
     rownames(DT) <- target
     colData <- DT
-    dds <- DESeqDataSetFromMatrix(countData = rawcount_dataframe +1 , colData = colData, design=~(group)) # add pseudocount =1
+    dds <- DESeqDataSetFromMatrix(countData = dge$counts +1 , colData = colData, design=~(group)) # add pseudocount =1
 
     dds <- DESeq(dds)
     res <- results(dds)
@@ -527,15 +569,22 @@ def get_signatures(classes, dataset, normalization, method, meta_class_column_na
         if method == "limma":
             limma = robjects.r['limma']
             design_dataframe = pd.DataFrame([{'index': x, 'A': int(x in cls1_sample_ids), 'B': int(x in cls2_sample_ids)} for x in raw_expr_df.columns]).set_index('index')
-
             processed_data = {"expression": raw_expr_df, 'design': design_dataframe}
-            limma = robjects.r['limma']
-            limma_results = pandas2ri.conversion.rpy2py(limma(pandas2ri.conversion.py2rpy(processed_data['expression']), pandas2ri.conversion.py2rpy(processed_data['design']), filter_genes=filter_genes))
+            limma_results = pandas2ri.conversion.rpy2py(limma(pandas2ri.conversion.py2rpy(processed_data['expression']), pandas2ri.conversion.py2rpy(processed_data['design'])))
             
             signature = pd.DataFrame(limma_results[0])
             signature.index = limma_results[1]
             signature = signature.sort_values("t", ascending=False)
+        elif method == "limma_voom":
+            limma_voom = robjects.r['limma_voom']
+            design_dataframe = pd.DataFrame([{'index': x, 'A': int(x in cls1_sample_ids), 'B': int(x in cls2_sample_ids)} for x in raw_expr_df.columns]).set_index('index')
+            processed_data = {"expression": raw_expr_df, 'design': design_dataframe}
+            limma_results = pandas2ri.conversion.rpy2py(limma_voom(pandas2ri.conversion.py2rpy(processed_data['expression']), pandas2ri.conversion.py2rpy(processed_data['design'])))
             
+            signature = pd.DataFrame(limma_results[0])
+            signature.index = limma_results[1]
+            signature = signature.sort_values("t", ascending=False)
+
         elif method == "characteristic_direction":
             signature = characteristic_direction(dataset[tmp_normalization].loc[:, cls1_sample_ids], dataset[normalization].loc[:, cls2_sample_ids], calculate_sig=True)
             signature = signature.sort_values("CD-coefficient", ascending=False)
@@ -564,7 +613,7 @@ def run_volcano(signature, signature_label, dataset, pvalue_threshold, logfc_thr
     color = []
     text = []
     for index, rowData in signature.iterrows():
-        if "AveExpr" in rowData.index: # limma
+        if "AveExpr" in rowData.index: # limma limma_voom
             expr_colname = "AveExpr"
             pval_colname = "P.Value"
             logfc_colname = "logFC"

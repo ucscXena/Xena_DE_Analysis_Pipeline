@@ -21,10 +21,21 @@
 
 <script>
 (function() {
-   var value = JSON.parse(decodeURIComponent(location.hash.substring(1))).{{ this.args.urlhashkey }};
-   var DESeq2 = value && value.trim().toLowerCase() === "count";
-   if ( DESeq2) {
-       document.getElementById('{{ this.args.name }}').value = 'DESeq2';
-   }
+  var value = JSON.parse(decodeURIComponent(location.hash.substring(1))).{{ this.args.urlhashkey }};
+  var selectBox = document.getElementById('{{ this.args.name }}');
+
+  var limma_voom = value && !(value.trim().toLowerCase().startsWith("log")) && value.trim().toLowerCase().includes("count");
+  if ( limma_voom) {
+    selectBox.value = 'limma_voom';
+  }
+
+  var countData = value && !(value.trim().toLowerCase().startsWith("log")) && value.trim().toLowerCase() === "count";
+  if (!countData) {
+    for (var i=0; i<selectBox.length; i++) {
+    if (selectBox.options[i].value == 'DESeq2')
+        selectBox.remove(i);
+    }
+  }
+
 })();
 </script>

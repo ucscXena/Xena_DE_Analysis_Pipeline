@@ -19,7 +19,7 @@
 (function() {
    var value = JSON.parse(decodeURIComponent(location.hash.substring(1))).{{ this.args.urlhashkey }};
    var radio = document.getElementById('{{ this.args.name }}-yes');
-   var logTransform = value && !(value.trim().toLowerCase().startsWith("log")) && (!value.trim().toLowerCase().includes("count"));
+   var logTransform = value && !(value.trim().toLowerCase().startsWith("log")) && value.trim().toLowerCase().includes("count");
    if ( logTransform) {
        radio.checked = true;
    }
