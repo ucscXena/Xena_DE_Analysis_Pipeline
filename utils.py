@@ -450,12 +450,18 @@ robjects.r('''edgeR <- function(rawcount_dataframe, g1, g2) {
     # Load packages
     suppressMessages(require(limma))
     suppressMessages(require(edgeR))
-    
+    suppressMessages(require(dbplyr))
+
     colData <- as.data.frame(c(rep(c("Control"),length(g1)),rep(c("Condition"),length(g2))))
     rownames(colData) <- c(g1,g2)
     colnames(colData) <- c("group")
     colData$group = relevel(as.factor(colData$group), "Control")
     
+    target <- colnames(rawcount_dataframe)
+    DT <- colData %>% dplyr::slice(match(target, rownames(colData)))
+    rownames(DT) <- target
+    colData <- DT
+
     y <- DGEList(counts=rawcount_dataframe, group=colData$group)
     y <- calcNormFactors(y)
     y <- estimateCommonDisp(y)
@@ -477,11 +483,17 @@ robjects.r('''edgeR <- function(rawcount_dataframe, g1, g2) {
 robjects.r('''deseq2 <- function(rawcount_dataframe, g1, g2) {
     # Load packages
     suppressMessages(require(DESeq2))
+    suppressMessages(require(dbplyr))
     colData <- as.data.frame(c(rep(c("Control"),length(g1)),rep(c("Condition"),length(g2))))
     rownames(colData) <- c(g1,g2)
     colnames(colData) <- c("group")
     colData$group = relevel(as.factor(colData$group), "Control")
-    dds <- DESeqDataSetFromMatrix(countData = rawcount_dataframe, colData = colData, design=~(group))
+
+    target <- colnames(rawcount_dataframe)
+    DT <- colData %>% dplyr::slice(match(target, rownames(colData)))
+    rownames(DT) <- target
+    colData <- DT
+    dds <- DESeqDataSetFromMatrix(countData = rawcount_dataframe +1 , colData = colData, design=~(group)) # add pseudocount =1
 
     dds <- DESeq(dds)
     res <- results(dds)
