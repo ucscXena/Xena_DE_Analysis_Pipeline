@@ -6,3 +6,4 @@ BiocManager::install("edgeR")
 BiocManager::install("DESeq2")
 
 install.packages("statmod")
+install.packages("dbplyr")
