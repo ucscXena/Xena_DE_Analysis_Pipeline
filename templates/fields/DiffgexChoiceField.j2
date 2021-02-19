@@ -24,17 +24,30 @@
   var value = JSON.parse(decodeURIComponent(location.hash.substring(1))).{{ this.args.urlhashkey }};
   var selectBox = document.getElementById('{{ this.args.name }}');
 
-  var limma_voom = value && !(value.trim().toLowerCase().startsWith("log")) && value.trim().toLowerCase().includes("count");
-  if ( limma_voom) {
+  var countData = value && !(value.trim().toLowerCase().startsWith("log")) && value.trim().toLowerCase().includes("count");
+  if ( countData) {
     selectBox.value = 'limma_voom';
+    for (var i=0; i<selectBox.length; i++) {
+      if (selectBox.options[i].value === "limma")
+          selectBox.remove(i);
+      }
   }
 
-  var countData = value && !(value.trim().toLowerCase().startsWith("log")) && value.trim().toLowerCase() === "count";
-  if (!countData) {
+  var logData = value && value.trim().toLowerCase().startsWith("log");
+  if (logData) {
+    selectBox.value = 'limma';
     for (var i=0; i<selectBox.length; i++) {
-    if (selectBox.options[i].value == 'DESeq2')
-        selectBox.remove(i);
-    }
+      if (selectBox.options[i].value === "limma_voom" || selectBox.options[i].value === "edgeR" || selectBox.options[i].value === "DESeq2")
+          selectBox.remove(i);
+      }
+  }
+
+  var intCountData = value && !(value.trim().toLowerCase().startsWith("log")) && value.trim().toLowerCase() === "count";
+  if (!intCountData) {
+    for (var i=0; i<selectBox.length; i++) {
+      if (selectBox.options[i].value == 'DESeq2')
+          selectBox.remove(i);
+      }
   }
 
 })();
