@@ -554,7 +554,7 @@ robjects.r('''deseq2 <- function(rawcount_dataframe, g1, g2) {
 def get_signatures(classes, dataset, normalization, method, meta_class_column_name, meta_id_column_name, filter_genes):
     tmp_normalization = normalization.replace("+z_norm+q_norm","").replace("+z_norm","")
     raw_expr_df = dataset['rawdata']
-    expr_df = dataset['rawdata']
+    expr_df = dataset['rawdata']  #expr_df and raw_expr_df are the same, not sure why
     if filter_genes == True:
         expr_df = dataset['rawdata+filter_genes']
         
@@ -732,7 +732,8 @@ def run_enrichr(signature, signature_label, geneset_size=500, fc_colname = 'logF
     return enrichr_ids
 
 def submit_enrichr_geneset(geneset, label=''):
-    ENRICHR_URL = 'http://amp.pharm.mssm.edu/Enrichr/addList'
+    #ENRICHR_URL = 'http://amp.pharm.mssm.edu/Enrichr/addList'
+    ENRICHR_URL = 'http://maayanlab.cloud/Enrichr/addList'
     genes_str = '\n'.join(geneset)
     payload = {
         'list': (None, genes_str),
@@ -748,7 +749,8 @@ def submit_enrichr_geneset(geneset, label=''):
 
 
 def get_enrichr_results(user_list_id, gene_set_libraries, overlappingGenes=True, geneset=None):
-    ENRICHR_URL = 'http://amp.pharm.mssm.edu/Enrichr/enrich'
+    # ENRICHR_URL = 'http://amp.pharm.mssm.edu/Enrichr/enrich'
+    ENRICHR_URL = 'http://maayanlab.cloud/Enrichr/enrich'
     query_string = '?userListId=%s&backgroundType=%s'
     results = []
     for gene_set_library, label in gene_set_libraries.items():
