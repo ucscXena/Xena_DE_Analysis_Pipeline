@@ -1,0 +1,22 @@
+<div class="ipynb-field">
+    <div class="form-group">
+        <p>{{ this.args.description }}</p>
+        <label for="{{ this.args.name }}">
+            {{ this.args.label }}
+        </label>
+        <input type="text" id="{{ this.args.name }}"  name="{{ this.args.name }}" class="form-control" placeholder="{{ this.args.hint }}" value="{{ this.args.default }}">
+    </div>
+</div>
+
+<script>
+(function() {
+	var input = document.getElementById('{{ this.args.name }}');
+
+	window.addEventListener("message", (event) => {
+//		if (event.origin !== "http://localhost:5000")
+//			return;
+		input.value = event.data;
+		event.source.postMessage('ack', '*');
+	}, false);
+})();
+</script>
