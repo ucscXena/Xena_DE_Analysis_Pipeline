@@ -256,7 +256,7 @@ def plot_samples(pca_results, meta_id_column_name, meta_class_column_name, count
 
     caption = '3D {} plot for samples using {} genes having largest variance. \
     The figure displays an interactive, three-dimensional scatter plot of the data. \
-    Each point represents an RNA-seq sample. \
+    Each point represents an gene expression sample. \
     Samples with similar gene expression profiles are closer in the three-dimensional space. \
     If provided, sample groups are indicated using different colors, allowing for easier interpretation of the results.'.format(pca_results["method"], pca_results['nr_genes'])
     display(IPython.core.display.HTML('''
@@ -727,12 +727,11 @@ def run_enrichr(signature, signature_label, geneset_size=500, fc_colname = 'logF
     }
 
     # Submit to Enrichr
-    enrichr_ids = {geneset_label: submit_enrichr_geneset(geneset=geneset, label=signature_label+', '+geneset_label+', from Bulk RNA-seq Appyter') for geneset_label, geneset in genesets.items()}
+    enrichr_ids = {geneset_label: submit_enrichr_geneset(geneset=geneset, label=signature_label+', '+geneset_label+', from Xena DGE Appyter') for geneset_label, geneset in genesets.items()}
     enrichr_ids['signature_label'] = signature_label
     return enrichr_ids
 
 def submit_enrichr_geneset(geneset, label=''):
-    #ENRICHR_URL = 'http://amp.pharm.mssm.edu/Enrichr/addList'
     ENRICHR_URL = 'http://maayanlab.cloud/Enrichr/addList'
     genes_str = '\n'.join(geneset)
     payload = {
@@ -749,7 +748,6 @@ def submit_enrichr_geneset(geneset, label=''):
 
 
 def get_enrichr_results(user_list_id, gene_set_libraries, overlappingGenes=True, geneset=None):
-    # ENRICHR_URL = 'http://amp.pharm.mssm.edu/Enrichr/enrich'
     ENRICHR_URL = 'http://maayanlab.cloud/Enrichr/enrich'
     query_string = '?userListId=%s&backgroundType=%s'
     results = []
@@ -983,14 +981,14 @@ def run_l1000cds2(signature, nr_genes=500, signature_label='', plot_type='intera
 
         # Send to API
         config = {"aggravate":aggravate,"searchMethod":"geneSet","share":True,"combination":False,"db-version":"latest"}
-        r = requests.post('http://amp.pharm.mssm.edu/L1000CDS2/query',data=json.dumps({"data":data,"config":config}),headers={'content-type':'application/json'})
+        r = requests.post('http://maayanlab.cloud/L1000CDS2/query',data=json.dumps({"data":data,"config":config}),headers={'content-type':'application/json'})
         label = 'mimic' if aggravate else 'reverse'
 
         # Add results
         resGeneSet = r.json()
         if resGeneSet.get('topMeta'):
             l1000cds2_dataframe = pd.DataFrame(resGeneSet['topMeta'])[['cell_id', 'pert_desc', 'pert_dose', 'pert_dose_unit', 'pert_id', 'pert_time', 'pert_time_unit', 'pubchem_id', 'score', 'sig_id']].replace('-666', np.nan)
-            l1000cds2_results[label] = {'url': 'http://amp.pharm.mssm.edu/L1000CDS2/#/result/{}'.format(resGeneSet['shareId']), 'table': l1000cds2_dataframe}
+            l1000cds2_results[label] = {'url': 'http://maayanlab.cloud/L1000CDS2/#/result/{}'.format(resGeneSet['shareId']), 'table': l1000cds2_dataframe}
         else:
             l1000cds2_results[label] = None
     l1000cds2_results['plot_type'] = plot_type
@@ -1070,7 +1068,7 @@ def run_l1000fwd(signature, nr_genes=500, signature_label=''):
     payload = {"up_genes":upperGenes(signature.index[:nr_genes]),"down_genes":upperGenes(signature.index[-nr_genes:])}
 
     # Get URL
-    L1000FWD_URL = 'https://amp.pharm.mssm.edu/L1000FWD/'
+    L1000FWD_URL = 'https://maayanlab.cloud/L1000FWD/'
 
     # Get result
     response = requests.post(L1000FWD_URL + 'sig_search', json=payload)
@@ -1079,7 +1077,7 @@ def run_l1000fwd(signature, nr_genes=500, signature_label=''):
     else:
         # Get ID and URL
         result_id = response.json()['result_id']
-        l1000fwd_results['result_url'] = 'https://amp.pharm.mssm.edu/l1000fwd/vanilla/result/'+result_id
+        l1000fwd_results['result_url'] = 'https://maayanlab.cloud/l1000fwd/vanilla/result/'+result_id
         l1000fwd_results['result_id'] = result_id
 
         # Get Top
@@ -1096,6 +1094,7 @@ def plot_l1000fwd(l1000fwd_results, counter, nr_drugs=7, height=300):
 
         # Display IFrame
         display_link(l1000fwd_results['result_url'])
+        display(Markdown('**If the plot below is empty, right-click on the empty plot, then click \"Reload Frame\"**'))
         display(IFrame(l1000fwd_results['result_url'], width="1000", height="1000"))
 
         # Display tables
