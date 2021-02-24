@@ -1,6 +1,5 @@
-<div class="ipynb-field">
+<div class="ipynb-field" style ="display:none">
     <div class="form-group">
-        <p>{{ this.args.description }}</p>
         <label for="{{ this.args.name }}">
             {{ this.args.label }}
         </label>
@@ -8,13 +7,16 @@
     </div>
 </div>
 
+
 <script>
 (function() {
 	var input = document.getElementById('{{ this.args.name }}');
-
 	window.addEventListener("message", (event) => {
-//		if (event.origin !== "http://localhost:5000")
-//			return;
+        var localhost_patt = /^http:\/\/localhost:[0-9]+$/;
+        var xenabrowser_patt = /^https:\/\/[a-z]+xenabrowser.net$/;
+        if (!localhost_patt.test(event.origin) && !xenabrowser_patt.test(event.origin))
+			return;
+
 		input.value = event.data;
 		event.source.postMessage('ack', '*');
 	}, false);
