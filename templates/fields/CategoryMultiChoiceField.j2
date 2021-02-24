@@ -1,54 +1,60 @@
 <div class="row px-3 pb-3">
-  <div class="col-lg-3 bold text-lg-right my-auto">
-    {{ this.args.label }}
-    {%- if this.args.description %}
-      <sup data-toggle="tooltip" title="{{ this.args.description }}"><i class="far fa-question-circle"></i></sup>
-    {% endif -%}:
-  </div>
-  <div class="col-lg-6 pt-2 pt-lg-0">
-    <select id= "{{ this.args.name }}"
-      name="{{ this.args.name }}"
-      multiple
-      class="form-control nodecoration tiny bg-white px-2 py-1 mb-0"
-    >
-      {% for choice in this.args.choices %}
-        <option{% if choice in this.args.default %} selected{% endif %}>{{ choice }}</option>
-      {% endfor %}
-    </select>
-  </div>
+    <div class="col-lg-3 bold text-lg-right my-auto">
+        <span id = 'label-{{ this.args.name }}'>{{ this.args.label }}</span>
+        {%- if this.args.description %}
+            <sup data-toggle="tooltip" title="{{ this.args.description }}"><i class="far fa-question-circle"></i></sup>
+        {% endif -%}:
+    </div>
+    <div class="col-lg-6 pt-2 pt-lg-0">
+        <select id= "{{ this.args.name }}"
+            name="{{ this.args.name }}"
+            multiple
+            class="form-control nodecoration tiny bg-white px-2 py-1 mb-0"
+        >
+        {% for choice in this.args.choices %}
+            <option{% if choice in this.args.default %} selected{% endif %}>{{ choice }}</option>
+        {% endfor %}
+        </select>
+    </div>
 </div>
 
 <script>
 (function() {
-  var input = document.getElementById('{{ this.args.name }}');
+    var input = document.getElementById('{{ this.args.name }}');
+    var label = document.getElementById('label-{{ this.args.name }}');
 
-  window.addEventListener("message", (event) => {
-    var localhost_patt = /^http:\/\/localhost:[0-9]+$/;
-    var xenabrowser_patt = /^https:\/\/[a-z]+xenabrowser.net$/;
-    if (!localhost_patt.test(event.origin) && !xenabrowser_patt.test(event.origin))
+    window.addEventListener("message", (event) => {
+        var localhost_patt = /^http:\/\/localhost:[0-9]+$/;
+        var xenabrowser_patt = /^https:\/\/[a-z]+xenabrowser.net$/;
+        if (!localhost_patt.test(event.origin) && !xenabrowser_patt.test(event.origin))
 			return;
 
-    var para = JSON.parse(event.data);
-    var choices = para.data.codes;
+        var para = JSON.parse(event.data);
+        var choices = para.data.codes;
+        var fieldLabel = para.fieldLabel;
 
-    if (choices) {
-        choices.sort();
-        input.innerHTML="";
-        for (const c of choices) {
-            if (c !== '') {
-              var option = document.createElement("option");
-              option.value = c;
-              option.text = c;
-              input.appendChild(option);
+        if (choices) {
+            choices.sort();
+            input.innerHTML="";
+            for (const c of choices) {
+                if (c !== '') {
+                    var option = document.createElement("option");
+                        option.value = c;
+                        option.text = c;
+                        input.appendChild(option);
+                }
             }
+            if ("{{ this.args.name }}" == 'category_case')
+                input.value = input.options[0].value;
+            else
+                input.value = input.options[1].value;
         }
-        if ("{{ this.args.name }}" == 'category_case')
-          input.value = input.options[0].value;
-        else
-          input.value = input.options[1].value;
-    }
-    event.source.postMessage('ack', '*');
-  }, false);
+        if (fieldLabel) {
+            label.innerHTML = fieldLabel + ' {{ this.args.label }}'
+        }
+        
+        event.source.postMessage('ack', '*');
+    }, false);
 })();
 
 </script>
