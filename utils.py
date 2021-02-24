@@ -1114,7 +1114,7 @@ def plot_l1000fwd(l1000fwd_results, counter, nr_drugs=7, height=300):
 
         # Display IFrame
         display_link(l1000fwd_results['result_url'])
-        display(Markdown('**If the plot below is empty, right-click on the empty plot, then click \"Reload Frame\". Sometimes, reload this page is necessary**'))
+        display(Markdown('**If the plot below is empty, right-click on the empty plot, then click \"Reload Frame\". Sometimes, reload this page first is necessary.**'))
         display(IFrame(l1000fwd_results['result_url'], width="1000", height="1000"))
 
         # Display tables
