@@ -17,11 +17,23 @@
 
 <script>
 (function() {
-   var value = JSON.parse(decodeURIComponent(location.hash.substring(1))).{{ this.args.urlhashkey }};
-   var radio = document.getElementById('{{ this.args.name }}-yes');
-   var logTransform = value && !(value.trim().toLowerCase().startsWith("log")) && value.trim().toLowerCase().includes("count");
-   if ( logTransform) {
-       radio.checked = true;
-   }
+	var radio = document.getElementById('{{ this.args.name }}-yes');
+
+	window.addEventListener("message", (event) => {
+		var localhost_patt = /^http:\/\/localhost:[0-9]+$/;
+		var xenabrowser_patt = /^https:\/\/[a-z]+xenabrowser.net$/;
+		if (!localhost_patt.test(event.origin) && !xenabrowser_patt.test(event.origin))
+			return;
+
+		var para = JSON.parse(event.data);
+		var unit = para.preferredExpression.unit;
+		var logTransform = unit && !(unit.trim().toLowerCase().startsWith("log")) && unit.trim().toLowerCase().includes("count");
+		if ( logTransform) {
+			radio.checked = true;
+		}
+
+		event.source.postMessage('ack', '*');
+	}, false);
 })();
+
 </script>

@@ -51,11 +51,19 @@ def check_files(fname):
     if fname.endswith(".txt") == False and fname.endswith(".csv") ==False and fname.endswith(".tsv")==False:
         raise IOError
 
-def check_remote_file(fname):
+def find_remote_file(fname):
     r = http.request('HEAD', fname)
     http.clear()
     if r.status != 200:
-        raise IOError
+        fname = fname +".gz"
+        r = http.request('HEAD', fname)
+        http.clear()
+        if r.status != 200:
+            raise IOError
+        else:
+            return fname
+    else:
+        return fname
 
 def get_Remote_File_Buffer(fname):
     r = http.request('GET', fname)
@@ -107,6 +115,18 @@ def convert_to_hugo(expr_df, probemap_df):
     df_copy = pd.DataFrame(big_list, index = gene_list, columns=expr_df.columns)
     df_copy = df_copy.groupby(df_copy.index).mean()
     return df_copy
+
+def build_meta_df(samples, values, codes):
+    big_list= []
+    for i in range (0, len(samples)):
+        sample = samples[i]
+        data = values[i]
+        if data is None:
+            value = ''
+        else:
+            value = codes[values[i]]
+        big_list.append([sample, value])
+    return pd.DataFrame(big_list, columns=['sample', 'category'])
 
 def check_df(df, col):
     if col not in df.columns:
@@ -1094,7 +1114,7 @@ def plot_l1000fwd(l1000fwd_results, counter, nr_drugs=7, height=300):
 
         # Display IFrame
         display_link(l1000fwd_results['result_url'])
-        display(Markdown('**If the plot below is empty, right-click on the empty plot, then click \"Reload Frame\"**'))
+        display(Markdown('**If the plot below is empty, right-click on the empty plot, then click \"Reload Frame\". Sometimes, reload this page is necessary**'))
         display(IFrame(l1000fwd_results['result_url'], width="1000", height="1000"))
 
         # Display tables
@@ -1116,3 +1136,8 @@ def plot_l1000fwd(l1000fwd_results, counter, nr_drugs=7, height=300):
             display(create_download_link(signature_dataframe, filename="{} Signatures for {}.csv".format(direction.title(), l1000fwd_results["signature_label"])))
             counter += 1
     return counter
+
+def xenaFileDownloadLink(host, dataset_name):
+    if host.endswith('/'):
+        host = host[:-1]
+    return host + '/download/' + dataset_name

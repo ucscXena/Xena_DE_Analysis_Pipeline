@@ -1,54 +1,64 @@
-  
 <div class="row px-3 pb-3">
-  <div class="col-lg-3 bold text-lg-right my-auto">
-    {{ this.args.label }}
-    {%- if this.args.description %}
-      <sup data-toggle="tooltip" title="{{ this.args.description }}"><i class="far fa-question-circle"></i></sup>
-    {% endif -%}:
-  </div>
-  <div class="col-lg-6 pt-2 pt-lg-0">
-    <select
-      id="{{ this.args.name }}"
-      name="{{ this.args.name }}"
-      class="form-control nodecoration tiny bg-white px-2 py-1 mb-0"
-    >
-      {% for choice in this.args.choices %}
-          <option{% if choice == this.args.default %} selected{% endif %}>{{ choice }}</option>
-      {% endfor %}
-    </select>
-  </div>
+	<div class="col-lg-3 bold text-lg-right my-auto">
+		{{ this.args.label }}
+		{%- if this.args.description %}
+			<sup data-toggle="tooltip" title="{{ this.args.description }}"><i class="far fa-question-circle"></i></sup>
+		{% endif -%}:
+	</div>
+	<div class="col-lg-6 pt-2 pt-lg-0">
+		<select
+			id="{{ this.args.name }}"
+			name="{{ this.args.name }}"
+			class="form-control nodecoration tiny bg-white px-2 py-1 mb-0"
+		>
+		{% for choice in this.args.choices %}
+			<option{% if choice == this.args.default %} selected{% endif %}>{{ choice }}</option>
+		{% endfor %}
+		</select>
+	</div>
 </div>
 
 <script>
 (function() {
-  var value = JSON.parse(decodeURIComponent(location.hash.substring(1))).{{ this.args.urlhashkey }};
-  var selectBox = document.getElementById('{{ this.args.name }}');
+	var selectBox = document.getElementById('{{ this.args.name }}');
 
-  var countData = value && !(value.trim().toLowerCase().startsWith("log")) && value.trim().toLowerCase().includes("count");
-  if ( countData) {
-    selectBox.value = 'limma_voom';
-    for (var i=0; i<selectBox.length; i++) {
-      if (selectBox.options[i].value === "limma")
-          selectBox.remove(i);
-      }
-  }
+	window.addEventListener("message", (event) => {
+		var localhost_patt = /^http:\/\/localhost:[0-9]+$/;
+		var xenabrowser_patt = /^https:\/\/[a-z]+xenabrowser.net$/;
+		if (!localhost_patt.test(event.origin) && !xenabrowser_patt.test(event.origin))
+			return;
 
-  var logData = value && value.trim().toLowerCase().startsWith("log");
-  if (logData) {
-    selectBox.value = 'limma';
-    for (var i=0; i<selectBox.length; i++) {
-      if (selectBox.options[i].value === "limma_voom" || selectBox.options[i].value === "edgeR" || selectBox.options[i].value === "DESeq2")
-          selectBox.remove(i);
-      }
-  }
+		var para = JSON.parse(event.data);
+		var unit = para.preferredExpression.unit;
 
-  var intCountData = value && !(value.trim().toLowerCase().startsWith("log")) && value.trim().toLowerCase() === "count";
-  if (!intCountData) {
-    for (var i=0; i<selectBox.length; i++) {
-      if (selectBox.options[i].value == 'DESeq2')
-          selectBox.remove(i);
-      }
-  }
+		var countData = unit && !(unit.trim().toLowerCase().startsWith("log")) && unit.trim().toLowerCase().includes("count");
+		if ( countData) {
+		selectBox.value = 'limma_voom';
+		for (var i=0; i<selectBox.length; i++) {
+			if (selectBox.options[i].value === "limma")
+				selectBox.remove(i);
+			}
+		}
 
+		var logData = unit && unit.trim().toLowerCase().startsWith("log");
+		if (logData) {
+		selectBox.value = 'limma';
+		for (var i=0; i<selectBox.length; i++) {
+			if (selectBox.options[i].value === "limma_voom" || selectBox.options[i].value === "edgeR" || selectBox.options[i].value === "DESeq2")
+				selectBox.remove(i);
+			}
+		}
+
+		var intCountData = unit && !(unit.trim().toLowerCase().startsWith("log")) && unit.trim().toLowerCase() === "count";
+		if (!intCountData) {
+		for (var i=0; i<selectBox.length; i++) {
+			if (selectBox.options[i].value == 'DESeq2')
+				selectBox.remove(i);
+			}
+		}
+
+		event.source.postMessage('ack', '*');
+	}, false);
 })();
+
 </script>
