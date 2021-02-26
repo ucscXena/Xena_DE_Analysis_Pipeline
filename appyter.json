@@ -8,16 +8,17 @@
   "authors": [
     {
       "name": "UCSC Xena team",
-      "email": "minji.jeon1@gmail.com"
+      "email": "jzhu@soe.ucsc.edu"
     }
   ],
-  "url": "https://github.com/MaayanLab/appyter-catalog",
+  "url": "https://github.com/ucscXena/Xena_DE_Analysis_Pipeline",
   "tags": [
     "Enrichment Analysis",
     "Enrichr",
     "L1000",
     "L1000FWD",
-    "RNA-seq"
+    "RNA-seq",
+    "Xena"
   ],
   "license": "CC-BY-NC-SA-4.0",
   "appyter": {
