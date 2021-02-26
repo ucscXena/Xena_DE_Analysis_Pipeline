@@ -7,6 +7,7 @@ rpy2
 magic-impute
 pandas
 urllib3
+urllib
 certifi
 requests
 plotly
@@ -20,3 +21,4 @@ pybase64
 umap-learn
 resource
 psutil
+socket
