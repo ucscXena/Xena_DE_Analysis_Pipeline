@@ -27,7 +27,12 @@
 
 		var para = JSON.parse(event.data);
 		var unit = para.preferredExpression.unit;
-		var logTransform = unit && !(unit.trim().toLowerCase().startsWith("log")) && unit.trim().toLowerCase().includes("count");
+    var countData = unit && !(unit.trim().toLowerCase().startsWith("log")) && unit.trim().toLowerCase().includes("count");
+		var tpmData = unit && unit.trim().toLowerCase() === "tpm";
+		var fpkmData = unit && unit.trim().toLowerCase().includes("fpkm");
+		var logData = unit && unit.trim().toLowerCase().startsWith("log");
+
+		var logTransform = unit && !logData && (countData || tpmData || fpkmData);
 		if ( logTransform) {
 			radio.checked = true;
 		}

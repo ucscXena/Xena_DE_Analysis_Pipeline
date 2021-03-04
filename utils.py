@@ -2,6 +2,7 @@ from rpy2 import robjects
 from rpy2.robjects import r, pandas2ri
 # Basic libraries
 import pandas as pd
+import math
 import os
 import urllib3, certifi
 from io import BytesIO
@@ -598,10 +599,9 @@ robjects.r('''deseq2 <- function(rawcount_dataframe, g1, g2) {
 }
 ''')
 
-def get_signatures(classes, dataset, normalization, method, meta_class_column_name, meta_id_column_name, filter_genes):
+def get_signatures(classes, dataset, normalization, method, meta_class_column_name, meta_id_column_name, filter_genes, logData, pseudocount):
     tmp_normalization = normalization.replace("+z_norm+q_norm","").replace("+z_norm","")
-    raw_expr_df = dataset['rawdata']
-    expr_df = dataset['rawdata']  #expr_df and raw_expr_df are the same, not sure why
+    expr_df = dataset['rawdata']
     if filter_genes == True:
         expr_df = dataset['rawdata+filter_genes']
         
@@ -613,20 +613,12 @@ def get_signatures(classes, dataset, normalization, method, meta_class_column_na
         
         signature_label = " vs. ".join([cls2, cls1])
         print (signature_label)
-        if method == "limma":
-            limma = robjects.r['limma']
-            design_dataframe = pd.DataFrame([{'index': x, 'A': int(x in cls1_sample_ids), 'B': int(x in cls2_sample_ids)} for x in raw_expr_df.columns]).set_index('index')
-            processed_data = {"expression": raw_expr_df, 'design': design_dataframe}
-            limma_results = pandas2ri.conversion.rpy2py(limma(pandas2ri.conversion.py2rpy(processed_data['expression']), pandas2ri.conversion.py2rpy(processed_data['design'])))
-            
-            signature = pd.DataFrame(limma_results[0])
-            signature.index = limma_results[1]
-            signature = signature.sort_values("t", ascending=False)
-
-        elif method == "limma_voom":
+        if method == "limma_voom":
             limma_voom = robjects.r['limma_voom']
-            design_dataframe = pd.DataFrame([{'index': x, 'A': int(x in cls1_sample_ids), 'B': int(x in cls2_sample_ids)} for x in raw_expr_df.columns]).set_index('index')
-            processed_data = {"expression": raw_expr_df, 'design': design_dataframe}
+            design_dataframe = pd.DataFrame([{'index': x, 'A': int(x in cls1_sample_ids), 'B': int(x in cls2_sample_ids)} for x in expr_df.columns]).set_index('index')
+            if logData: # transform back to non-log data
+                unlog_expr_df = np.exp2(expr_df) -pseudocount
+            processed_data = {"expression": unlog_expr_df, 'design': design_dataframe}
             limma_results = pandas2ri.conversion.rpy2py(limma_voom(pandas2ri.conversion.py2rpy(processed_data['expression']), pandas2ri.conversion.py2rpy(processed_data['design'])))
             
             signature = pd.DataFrame(limma_results[0])
@@ -638,6 +630,8 @@ def get_signatures(classes, dataset, normalization, method, meta_class_column_na
             signature = signature.sort_values("CD-coefficient", ascending=False)
 
         elif method == "edgeR":
+            if logData: # transform back to non-log data
+                unlog_expr_df = np.exp2(expr_df) -pseudocount
             edgeR = robjects.r['edgeR']
             edgeR_results = pandas2ri.conversion.rpy2py(edgeR(pandas2ri.conversion.py2rpy(expr_df), pandas2ri.conversion.py2rpy(cls1_sample_ids), pandas2ri.conversion.py2rpy(cls2_sample_ids)))
             
@@ -647,6 +641,8 @@ def get_signatures(classes, dataset, normalization, method, meta_class_column_na
 
         elif method == "DESeq2":
             # deseq2 receives raw counts
+            if logData: # transform back to non-log data
+                unlog_expr_df = np.exp2(expr_df) -pseudocount
             DESeq2 = robjects.r['deseq2']
             DESeq2_results = pandas2ri.conversion.rpy2py(DESeq2(pandas2ri.conversion.py2rpy(expr_df), pandas2ri.conversion.py2rpy(cls1_sample_ids), pandas2ri.conversion.py2rpy(cls2_sample_ids)))
             

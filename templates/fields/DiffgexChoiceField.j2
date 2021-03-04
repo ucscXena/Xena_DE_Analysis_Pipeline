@@ -32,38 +32,31 @@
 		var unit = para.preferredExpression.unit;
 
 		var countData = unit && !(unit.trim().toLowerCase().startsWith("log")) && unit.trim().toLowerCase().includes("count");
-		if ( countData) {
-			selectBox.value = 'limma_voom';
-			for (var i=0; i<selectBox.length; i++) {
-				if (selectBox.options[i].value === "limma")
-					selectBox.remove(i);
-			}
-		}
-
+		var intCountData = unit && unit.trim().toLowerCase() === "count";
+		var tpmData = unit && unit.trim().toLowerCase() === "tpm";
+		var fpkmData = unit && unit.trim().toLowerCase().includes("fpkm");
 		var logData = unit && unit.trim().toLowerCase().startsWith("log");
-		var pseudocount = 0;
-		var pattern = /\+\s*[0-9]+(\.[0-9]+)?\s*\)/;
-		var number = /[0-9]+(\.[0-9]+)?/;
-		var pseudocount = unit && pattern.exec(unit) && parseFloat(unit.match(pattern)[0].match(number)[0]);
-		
-		if (logData && pseudocount >= 1) {
-			selectBox.value = 'limma';
+
+		if (countData || tpmData || fpkmData || logData) {
+			selectBox.value = 'limma_voom';
+		} else { /* no unit or unknown unit */
 			for (var i=0; i<selectBox.length; i++) {
-				if (selectBox.options[i].value === "limma_voom" || selectBox.options[i].value === "edgeR" || selectBox.options[i].value === "DESeq2")
+				var s = 'characteristic direction';
+				selectBox.innerHTML=''
+				var option = document.createElement("option");
+				option.value = s;
+				option.text  =s;
+				selectBox.appendChild(option);
+			}
+		}
+
+		if (!countData) {
+			for (var i=0; i<selectBox.length; i++) {
+				if (selectBox.options[i].value == 'edgeR')
 					selectBox.remove(i);
 			}
 		}
 
-		if (!unit /*no unit*/ || (logData && pseudocount < 1) /*log data with negative values*/ || (unit && !countData && !logData) /*unknown unit*/) {
-			var s = 'characteristic direction';
-			selectBox.innerHTML=''
-			var option = document.createElement("option");
-			option.value = s;
-			option.text  =s;
-			selectBox.appendChild(option);
-		}
-		
-		var intCountData = unit && !(unit.trim().toLowerCase().startsWith("log")) && unit.trim().toLowerCase() === "count";
 		if (!intCountData) {
 			for (var i=0; i<selectBox.length; i++) {
 				if (selectBox.options[i].value == 'DESeq2')

@@ -19,5 +19,4 @@ chart_studio
 pybase64
 umap-learn
 resource
-psutil
 smart_open
