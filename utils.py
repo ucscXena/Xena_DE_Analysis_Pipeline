@@ -70,6 +70,35 @@ def get_Remote_File_Buffer(fname):
     http.clear()
     return BytesIO(r.data)
 
+def to_float(x):
+    try:
+        return float(x)
+    except:
+        return float('nan')
+
+def parse_xena_expr(fin, samples):
+    columns = fin.readline()[:-1].split('\t')
+    # find the columns to keep
+    keep_pos =[]
+    keep_samples =[]
+    ids =[]
+    for i in range(1, len(columns)):
+        if columns[i] in samples:
+            keep_pos.append(i)
+            keep_samples.append(columns[i])
+    big_list = []
+    while 1:
+        line = fin.readline()
+        if line == '':
+            break
+        data = line[:-1].split('\t')
+        id = data[0]
+        ids.append(id)
+        big_list.append(list(map(to_float, map(data.__getitem__, keep_pos))))
+    fin.close()
+    df = pd.DataFrame(big_list, index = ids, columns=keep_samples)
+    return df
+
 def check_subgroups (control_group, case_group):
     if len(case_group) == 0:
         raise Exception('Case subgroup has no samples')
@@ -78,15 +107,12 @@ def check_subgroups (control_group, case_group):
     if len(list(set(control_group) & set(case_group))) != 0:
         raise Exception('There can not be shared samples between the two subgroups')
 
-probemap_level = {
-    "gencode.v22.annotation.gene.probeMap": "ensemble_gene"
-}
-
 def check_probe_level(probemap_df):
     counter = 0
     counter_gene_level = 0
+    gene_pos = 1
     for probe in probemap_df.index:
-        if probe == probemap_df.loc[probe].gene:
+        if type(probemap_df.loc[probe][gene_pos]) == str and probe == probemap_df.loc[probe][gene_pos]:
             counter_gene_level += 1
         counter += 1
         if counter == 1000:
@@ -103,10 +129,11 @@ def convert_to_hugo(expr_df, probemap_df):
     '''
     big_list= []
     gene_list = []
+    gene_pos = 1
     for probe in expr_df.index:
         try:
-            if probemap_df.loc[probe].gene:
-                genes = probemap_df.loc[probe].gene.split(",")
+            if type(probemap_df.loc[probe][gene_pos]) == str:
+                genes = probemap_df.loc[probe][gene_pos].split(",")
                 gene_list += genes
                 for gene in genes:
                     big_list.append(list(expr_df.loc[probe]))
@@ -1114,8 +1141,8 @@ def plot_l1000fwd(l1000fwd_results, counter, nr_drugs=7, height=300):
 
         # Display IFrame
         display_link(l1000fwd_results['result_url'])
-        display(Markdown('**If the plot below is empty, right-click on the empty plot, then click \"Reload Frame\". Sometimes, reload this page first is necessary.**'))
-        display(IFrame(l1000fwd_results['result_url'], width="1000", height="1000"))
+        # display(Markdown('**If the plot below is empty, right-click on the empty plot, then click \"Reload Frame\". Sometimes, reload this page first is necessary.**'))
+        # display(IFrame(l1000fwd_results['result_url'], width="1000", height="1000"))
 
         # Display tables
         for direction, signature_list in l1000fwd_results['signatures'].items():
@@ -1138,6 +1165,8 @@ def plot_l1000fwd(l1000fwd_results, counter, nr_drugs=7, height=300):
     return counter
 
 def xenaFileDownloadLink(host, dataset_name):
+    if dataset_name == None:
+        return None
     if host.endswith('/'):
         host = host[:-1]
     return host + '/download/' + dataset_name

@@ -30,7 +30,7 @@
 			return;
 
         var para = JSON.parse(event.data);
-        var choices = para.data.codes;
+        var choices = para.filtered_codes;
         var fieldLabel = para.fieldLabel;
 
         if (choices) {
