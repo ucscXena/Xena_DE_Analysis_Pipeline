@@ -5,7 +5,7 @@ import pandas as pd
 import math
 import os
 import urllib3, certifi
-from io import BytesIO
+import urllib.parse
 import requests, json
 import sys
 import geode
@@ -65,11 +65,6 @@ def find_remote_file(fname):
             return fname
     else:
         return fname
-
-def get_Remote_File_Buffer(fname):
-    r = http.request('GET', fname)
-    http.clear()
-    return BytesIO(r.data)
 
 def to_float(x):
     try:
@@ -385,6 +380,7 @@ def plot_samples(pca_results, meta_id_column_name, meta_class_column_name, count
     display(Markdown("*Figure {}. {}*".format(counter, caption)))
     counter += 1
     return counter
+
 def run_clustergrammer(dataset, meta_class_column_name, normalization='logCPM', z_score=True, nr_genes=1500, metadata_cols=None, filter_samples=True,gene_list=None):
     # Subset the expression DataFrame using top 800 genes with largest variance
     data = dataset[normalization]
@@ -613,12 +609,33 @@ def get_signatures(classes, dataset, normalization, method, meta_class_column_na
         
         signature_label = " vs. ".join([cls2, cls1])
         print (signature_label)
+
+        # check values all non-negative for limma_voom, edgeR and DESeq2
+        if method == "limma_voom" or method == "edgeR" or method == "DESeq2":
+            if logData: # transform back to non-log data
+                unlog_expr_df = np.exp2(expr_df) - pseudocount
+                if (unlog_expr_df < 0).any().any(): # limma_voom requires non-negative values
+                    unlog_expr_df = np.exp2(expr_df)
+                expr_df = unlog_expr_df
+
+            if (expr_df < 0).any().any():
+                print(f"Error! {method} requires non-negative gene expression values. Negative values detected")
+                sleep(10)
+                raise SystemExit(1)
+
+        # check values all integer for DESeq2
+        if method == "DESeq2":
+            if (expr_df.fillna(-999) % 1  == 0).all().all():
+                pass
+            else:
+                print(f"Error! {method} requires all non-negative integer counts. Non integer values detected")
+                sleep(10)
+                raise SystemExit(1)
+
         if method == "limma_voom":
             limma_voom = robjects.r['limma_voom']
             design_dataframe = pd.DataFrame([{'index': x, 'A': int(x in cls1_sample_ids), 'B': int(x in cls2_sample_ids)} for x in expr_df.columns]).set_index('index')
-            if logData: # transform back to non-log data
-                unlog_expr_df = np.exp2(expr_df) -pseudocount
-            processed_data = {"expression": unlog_expr_df, 'design': design_dataframe}
+            processed_data = {"expression": expr_df, 'design': design_dataframe}
             limma_results = pandas2ri.conversion.rpy2py(limma_voom(pandas2ri.conversion.py2rpy(processed_data['expression']), pandas2ri.conversion.py2rpy(processed_data['design'])))
             
             signature = pd.DataFrame(limma_results[0])
@@ -630,8 +647,6 @@ def get_signatures(classes, dataset, normalization, method, meta_class_column_na
             signature = signature.sort_values("CD-coefficient", ascending=False)
 
         elif method == "edgeR":
-            if logData: # transform back to non-log data
-                unlog_expr_df = np.exp2(expr_df) -pseudocount
             edgeR = robjects.r['edgeR']
             edgeR_results = pandas2ri.conversion.rpy2py(edgeR(pandas2ri.conversion.py2rpy(expr_df), pandas2ri.conversion.py2rpy(cls1_sample_ids), pandas2ri.conversion.py2rpy(cls2_sample_ids)))
             
@@ -640,9 +655,6 @@ def get_signatures(classes, dataset, normalization, method, meta_class_column_na
             signature = signature.sort_values("logFC", ascending=False)
 
         elif method == "DESeq2":
-            # deseq2 receives raw counts
-            if logData: # transform back to non-log data
-                unlog_expr_df = np.exp2(expr_df) -pseudocount
             DESeq2 = robjects.r['deseq2']
             DESeq2_results = pandas2ri.conversion.rpy2py(DESeq2(pandas2ri.conversion.py2rpy(expr_df), pandas2ri.conversion.py2rpy(cls1_sample_ids), pandas2ri.conversion.py2rpy(cls2_sample_ids)))
             
@@ -1165,4 +1177,4 @@ def xenaFileDownloadLink(host, dataset_name):
         return None
     if host.endswith('/'):
         host = host[:-1]
-    return host + '/download/' + dataset_name
+    return host + '/download/' + urllib.parse.quote_plus(dataset_name)
