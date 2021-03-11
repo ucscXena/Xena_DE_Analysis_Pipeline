@@ -31,7 +31,10 @@
 		var para = JSON.parse(event.data);
 		var unit = para.preferredExpression.unit;
 
-		// var countData = unit && !(unit.trim().toLowerCase().startsWith("log")) && unit.trim().toLowerCase().includes("count");
+		var rawCountPattern = /^(expected_count|est_count|count|counts)$/; //raw count unit:  est_counts (kallisto)  expected_count (RSEM) count counts
+		var logRawCountPattern = /\(\s*(expected_count|est_count|count|counts)\s*(\+\s*\d+(\.\d+)?)?\)/; // log version of the raw count
+
+		var rawCountData = unit && unit.trim().toLowerCase().includes("count") && (rawCountPattern.test(unit.trim().toLowerCase()) || logRawCountPattern.test(unit.trim().toLowerCase()));
 		var countData = unit && unit.trim().toLowerCase().includes("count");
 		var tpmData = unit && unit.trim().toLowerCase().includes("tpm");
 		var fpkmData = unit && unit.trim().toLowerCase().includes("fpkm");
@@ -50,7 +53,7 @@
 			}
 		}
 
-		if (!countData) {
+		if (!rawCountData) {
 			for (var i=0; i<selectBox.length; i++) {
 				if (selectBox.options[i].value == 'edgeR')
 					selectBox.remove(i);

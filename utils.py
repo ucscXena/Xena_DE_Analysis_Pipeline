@@ -614,8 +614,10 @@ def get_signatures(classes, dataset, normalization, method, meta_class_column_na
         if method == "limma_voom" or method == "edgeR" or method == "DESeq2":
             if logData: # transform back to non-log data
                 unlog_expr_df = np.exp2(expr_df) - pseudocount
+                print(f"Info. Log transformed data. Base 2 exponentiation is applied")
                 if (unlog_expr_df < 0).any().any(): # requires non-negative values
                     unlog_expr_df = np.exp2(expr_df) # the entire matrix is shifted by pseudocount
+                    print(f"Warning! {method} requires all non-negative values. Negative values detected, only apply base2 exponentiation to log data, pseudocount ignored.")
                 expr_df = unlog_expr_df
 
             if (expr_df < 0).any().any():
@@ -629,7 +631,7 @@ def get_signatures(classes, dataset, normalization, method, meta_class_column_na
                 pass
             else:
                 expr_df = expr_df.round() # requires all non-negative integer counts
-                print(f"Warning! {method} requires all non-negative integer count values. Non integer values detected, converted all to integer values.")
+                print(f"Warning! {method} requires all non-negative integer count values. Non integer values detected, round to integer values.")
 
         if method == "limma_voom":
             limma_voom = robjects.r['limma_voom']
