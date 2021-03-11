@@ -31,9 +31,9 @@
 		var para = JSON.parse(event.data);
 		var unit = para.preferredExpression.unit;
 
-		var countData = unit && !(unit.trim().toLowerCase().startsWith("log")) && unit.trim().toLowerCase().includes("count");
-		var intCountData = unit && unit.trim().toLowerCase() === "count";
-		var tpmData = unit && unit.trim().toLowerCase() === "tpm";
+		// var countData = unit && !(unit.trim().toLowerCase().startsWith("log")) && unit.trim().toLowerCase().includes("count");
+		var countData = unit && unit.trim().toLowerCase().includes("count");
+		var tpmData = unit && unit.trim().toLowerCase().includes("tpm");
 		var fpkmData = unit && unit.trim().toLowerCase().includes("fpkm");
 		var logData = unit && unit.trim().toLowerCase().startsWith("log");
 
@@ -55,9 +55,6 @@
 				if (selectBox.options[i].value == 'edgeR')
 					selectBox.remove(i);
 			}
-		}
-
-		if (!intCountData) {
 			for (var i=0; i<selectBox.length; i++) {
 				if (selectBox.options[i].value == 'DESeq2')
 					selectBox.remove(i);

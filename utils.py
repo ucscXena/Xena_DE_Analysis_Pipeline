@@ -614,8 +614,8 @@ def get_signatures(classes, dataset, normalization, method, meta_class_column_na
         if method == "limma_voom" or method == "edgeR" or method == "DESeq2":
             if logData: # transform back to non-log data
                 unlog_expr_df = np.exp2(expr_df) - pseudocount
-                if (unlog_expr_df < 0).any().any(): # limma_voom requires non-negative values
-                    unlog_expr_df = np.exp2(expr_df)
+                if (unlog_expr_df < 0).any().any(): # requires non-negative values
+                    unlog_expr_df = np.exp2(expr_df) # the entire matrix is shifted by pseudocount
                 expr_df = unlog_expr_df
 
             if (expr_df < 0).any().any():
@@ -628,9 +628,8 @@ def get_signatures(classes, dataset, normalization, method, meta_class_column_na
             if (expr_df.fillna(-999) % 1  == 0).all().all():
                 pass
             else:
-                print(f"Error! {method} requires all non-negative integer counts. Non integer values detected")
-                sleep(10)
-                raise SystemExit(1)
+                expr_df = expr_df.round() # requires all non-negative integer counts
+                print(f"Warning! {method} requires all non-negative integer count values. Non integer values detected, converted all to integer values.")
 
         if method == "limma_voom":
             limma_voom = robjects.r['limma_voom']
@@ -1163,7 +1162,7 @@ def plot_l1000fwd(l1000fwd_results, counter, nr_drugs=7, height=300):
 
             # Display table
             pd.set_option('max.colwidth', -1)
-            signature_dataframe['Signature ID'] = ['<a href="http://amp.pharm.mssm.edu/dmoa/sig/{x}" target="_blank">{x}</a>'.format(**locals()) for x in signature_dataframe['Signature ID']]
+            signature_dataframe['Signature ID'] = ['<a href="https://maayanlab.cloud/dmoa/sig/{x}" target="_blank">{x}</a>'.format(**locals()) for x in signature_dataframe['Signature ID']]
             table_html = signature_dataframe.to_html(escape=False, classes='w-100')
             
             display(HTML('<style>.w-100{{width: 100% !important;}}</style><div style="max-height: 250px; overflow-y: auto; margin-bottom: 25px;">{}</div>'.format(table_html)))
