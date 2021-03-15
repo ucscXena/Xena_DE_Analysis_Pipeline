@@ -1178,4 +1178,5 @@ def xenaFileDownloadLink(host, dataset_name):
         return None
     if host.endswith('/'):
         host = host[:-1]
-    return host + '/download/' + urllib.parse.quote_plus(dataset_name)
+    head, tail = os.path.split(dataset_name)
+    return host + '/download/' + head + '/'+ urllib.parse.quote_plus(tail)
