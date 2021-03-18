@@ -97,11 +97,14 @@ def parse_xena_expr(fin, samples):
 
 def check_subgroups (control_group, case_group):
     if len(case_group) == 0:
-        raise Exception('Case subgroup has no samples')
+        return 'Subgroup 1 has no samples.'
     if len(control_group) == 0:
-        raise Exception('Control subgroup has no samples')
+        return 'Subgroup 2 has no samples.'
+    if control_group == case_group:
+        return 'You selected the same categories \"' + '_'.join(control_group)+ '\" for both subgroups.'
     if len(list(set(control_group) & set(case_group))) != 0:
-        raise Exception('There can not be shared samples between the two subgroups')
+        return 'There can not be shared samples between the two subgroups.'
+    return 0
 
 def check_probe_level(probemap_df):
     counter = 0
