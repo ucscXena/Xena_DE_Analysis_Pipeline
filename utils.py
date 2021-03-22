@@ -592,14 +592,51 @@ robjects.r('''deseq2 <- function(rawcount_dataframe, g1, g2) {
     
     results <- list("DESeq_dataframe"= res, "rownames"=rownames(res))
     return(results)
+}
+''')
+
+robjects.r('''preprocessing <- function(expr_matrix,  max_gene) {
+    # normalize, most variable genes
+    # Load packages
+    suppressMessages(require(statmod))
+    suppressMessages(require(limma))
     
+    # http://pklab.med.harvard.edu/scw2014/subpop_tutorial.html
+
+    norm_matrix <- normalizeQuantiles(expr_matrix)
     
-    
+    if (nrow(expr_matrix) > max_gene) {
+        winsorize <- function (x, fraction=0.05) {
+            if(length(fraction) != 1 || fraction < 0 || fraction > 0.5) {
+                stop("bad value for 'fraction'")
+            }
+            lim <- quantile(x, probs=c(fraction, 1-fraction), na.rm = TRUE,)
+            x[ x < lim[1] ] <- lim[1]
+            x[ x > lim[2] ] <- lim[2]
+            x
+        }
+        # winsorize to remove 2 most extreme cells (from each side)
+        wed <- t(apply(norm_matrix, 1, winsorize, fraction=2/ncol(norm_matrix)))
+
+        means <- rowMeans(wed, na.rm = TRUE)
+        vars <- apply(wed, 1, var, na.rm = TRUE)
+        cv2 <- vars/means^2
+        minMeanForFit <- unname( quantile( means[ which( cv2 > .3 ) ], .95 ) )
+        useForFit <- means >= minMeanForFit # & spikeins
+        fit <- glmgam.fit( cbind( a0 = 1, a1tilde = 1/means[useForFit] ),cv2[useForFit] )
+        a0 <- unname( fit$coefficients["a0"] )
+        a1 <- unname( fit$coefficients["a1tilde"])
+        afit <- a1/means+a0
+        varFitRatio <- vars/(afit*means^2)
+        varorder <- order(varFitRatio,decreasing=T)
+        return(as.data.frame(norm_matrix[varorder[0:max_gene],]))
+    } else {
+        return(as.data.frame(norm_matrix))
+    }
 }
 ''')
 
 def get_signatures(classes, dataset, normalization, method, meta_class_column_name, meta_id_column_name, filter_genes, logData, pseudocount):
-    tmp_normalization = normalization.replace("+z_norm+q_norm","").replace("+z_norm","")
     expr_df = dataset['rawdata']
     if filter_genes == True:
         expr_df = dataset['rawdata+filter_genes']
@@ -647,7 +684,13 @@ def get_signatures(classes, dataset, normalization, method, meta_class_column_na
             signature = signature.sort_values("t", ascending=False)
 
         elif method == "characteristic_direction":
-            signature = characteristic_direction(dataset[tmp_normalization].loc[:, cls1_sample_ids], dataset[tmp_normalization].loc[:, cls2_sample_ids], calculate_sig=True)
+            max_gene = 25 * 1000
+            if len(expr_df) > max_gene:
+                max_gene = int(len(expr_df) * 0.50) # top 50% most variable genes
+                print (f'Using the most variable {max_gene} genes')
+            preprocessing = robjects.r['preprocessing']
+            processed_data = pandas2ri.conversion.rpy2py(preprocessing(pandas2ri.conversion.py2rpy(expr_df), pandas2ri.conversion.py2rpy(max_gene)))
+            signature = characteristic_direction(processed_data.loc[:, cls1_sample_ids], processed_data.loc[:, cls2_sample_ids], calculate_sig=True)
             signature = signature.sort_values("CD-coefficient", ascending=False)
 
         elif method == "edgeR":
