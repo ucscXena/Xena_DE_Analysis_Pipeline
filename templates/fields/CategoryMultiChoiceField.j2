@@ -26,7 +26,9 @@
     window.addEventListener("message", (event) => {
         var localhost_patt = /^http:\/\/localhost:[0-9]+$/;
         var xenabrowser_patt = /^https:\/\/([a-z]+\.)?xenabrowser.net$/;
-        if (!localhost_patt.test(event.origin) && !xenabrowser_patt.test(event.origin))
+        var georgetown = 'https://gdochub.georgetown.edu';
+
+        if (!localhost_patt.test(event.origin) && !xenabrowser_patt.test(event.origin) && !event.origin.startsWith(georgetown))
 			return;
 
         var para = JSON.parse(event.data);
