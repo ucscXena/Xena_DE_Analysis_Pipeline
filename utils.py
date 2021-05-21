@@ -739,10 +739,10 @@ def run_volcano(signature, signature_label, dataset, pvalue_threshold, logfc_thr
             elif rowData[logfc_colname] > logfc_threshold:
                 color.append('red')
             else:
-                color.append('black')
+                color.append('grey')
 
         else:
-            color.append('black')
+            color.append('grey')
 
     volcano_plot_results = {'x': signature[logfc_colname], 'y': -np.log10(signature[pval_colname]), 'text':text, 'color': color, 'signature_label': signature_label, 'plot_type': plot_type}
     return volcano_plot_results
@@ -816,16 +816,37 @@ def plot_maplot(volcano_plot_results):
     )
 
 
-def run_enrichr(signature, signature_label, geneset_size=500, fc_colname = 'logFC', sort_genes_by='t', ascending=True):
-
+def run_enrichr(signature, signature_label, geneset_size=500, fc_colname = 'logFC', sort_genes_by='t', up_ascending=True, down_ascending=True):
+    '''
+    if diff_gex_method == "characteristic_direction":
+        fc_colname = "CD-coefficient"
+        sort_genes_by = "CD-coefficient"
+        up_ascending = False
+        down_ascending = True
+    elif diff_gex_method == "limma" or diff_gex_method == "limma_voom":
+        fc_colname = "logFC"
+        sort_genes_by = "t"
+        up_ascending = False
+        down_ascending = True
+    elif diff_gex_method == "edgeR":
+        fc_colname = "logFC"
+        sort_genes_by = "PValue"
+        up_ascending = True
+        down_ascending = True
+    elif diff_gex_method == "DESeq2":
+        fc_colname = "log2FoldChange"
+        sort_genes_by = "padj"
+        up_ascending = True
+        down_ascending = True
+    '''
     # Sort signature
-    up_signature = signature[signature[fc_colname] > 0].sort_values(sort_genes_by, ascending=ascending)
-    down_signature = signature[signature[fc_colname] < 0].sort_values(sort_genes_by, ascending=ascending)
+    up_signature = signature[signature[fc_colname] > 0].sort_values(sort_genes_by, ascending= up_ascending)
+    down_signature = signature[signature[fc_colname] < 0].sort_values(sort_genes_by, ascending= down_ascending)
     
     # Get genesets
     genesets = {
         'upregulated': up_signature.index[:geneset_size],
-        'downregulated': down_signature.index[:geneset_size:]
+        'downregulated': down_signature.index[:geneset_size]
     }
 
     # Submit to Enrichr
